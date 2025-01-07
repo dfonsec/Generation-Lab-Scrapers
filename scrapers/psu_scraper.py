@@ -29,7 +29,21 @@ def obtain_data():
     
     time.sleep(5)
     
-    
+    for letter in LETTERS:
+        # type in the letter
+        input_text(driver, letter)
+        
+        
+        # then obtain the info panels
+        current_panels = get_info_panels(driver)
+            
+            # then we iterate over each one
+                # if a particular element.text is equal to student,
+                # save that data
+        for panel in current_panels:
+            
+        # click next 
+        
     
     
     return
