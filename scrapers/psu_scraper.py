@@ -6,14 +6,23 @@ import re
 import pandas as pd
 import time
 
+#PATHS
 SEARCH_FIELD = '//*[@id="mat-input-0"]'
 SEARCH_BUTTON = '//*[@id="app-root"]/main/div/dir-directory/section/mat-card/mat-card-content/dir-search-bar/section/mat-form-field/div[1]/div/div[3]/button[2]'
 NEXT_BUTTON = '//pagination-controls//li/a[contains(text(), "Next")]'
+EMAIL_PATH = './/div/section[1]/div[1]/dir-row-display[3]/section/div/a'
+TITLE_PATH = './/div/section[1]/div[2]/dir-row-display[1]/section/div/span'
+CAMPUS_PATH = './/div/section[1]/div[2]/dir-row-display[3]/section/div/span'
+NAME_CLASS = 'description-label'
+
+
+
 LETTERS = ['a', 'b', 'c', 'd', 'e', 
            'f', 'g', 'h', 'i', 'j', 
            'k', 'l', 'm', 'n', 'o', 
            'p', 'q', 'r', 's', 't', 
            'u', 'v', 'w', 'x', 'y', 'z']
+
 URL = "https://directory.psu.edu/"
 
 
@@ -24,7 +33,7 @@ def crawler():
     driver.get(URL)
     
     result= []
-    time.sleep(8)
+    time.sleep(5)
     for letter in LETTERS:
         print(f"Scraping data for letter: {letter}")
         data = scrape_page_data(driver, letter)
@@ -42,22 +51,19 @@ def scrape_page_data(driver, input):
     
     time.sleep(5)
     
-    panel_idx = 0
     while True:
         try:
-            time.sleep(2)
+            time.sleep(4)
             current_panels = get_info_panels(driver)
             for panel in current_panels:
                 if not is_student(panel):
-                    panel_idx += 1
                     continue
                 
                 dropdown_button = panel.find_element(By.XPATH, './/span[contains(@class, "mat-expansion-indicator")]')
                 dropdown_button.click()
-                time.sleep(1)
-                data = get_panel_data(panel, panel_idx)
+                time.sleep(4)
+                data = get_panel_data(panel)
                 result_list.append(data)
-                panel_idx += 1
             try:
                 next_button = driver.find_element(By.XPATH, NEXT_BUTTON)
                 if next_button.is_enabled():
@@ -81,8 +87,8 @@ def scrape_page_data(driver, input):
 
 def input_text(driver, text):
     search_field = driver.find_element(By.XPATH, SEARCH_FIELD)
-    search_field.clear()  # Clear the text field
-    search_field.send_keys(text)  # Enter the new text
+    search_field.clear() 
+    search_field.send_keys(text)  
     return
 
 def click_button(driver, path):
@@ -95,9 +101,6 @@ def get_info_panels(driver):
     info_panels = driver.find_elements(By.TAG_NAME, "dir-info-panel")
     return info_panels
 
-def get_page_lim(driver):
-    return driver.find_element(By.XPATH, '//*[@id="app-root"]/main/div/dir-directory/section/mat-card/mat-card-content/div/div[2]/pagination-controls/pagination-template/nav/ul/li[9]/a/span[2]').text
-
 def is_student(panel):
     panel_type = panel.find_element(By.CLASS_NAME, "description-sublabel").text
     
@@ -107,11 +110,11 @@ def is_student(panel):
     return False
     
 
-def get_panel_data(panel, panel_idx):
-    panel_name = panel.find_element(By.CLASS_NAME, "description-label").text
-    panel_email = panel.find_element(By.XPATH, './/div/section[1]/div[1]/dir-row-display[3]/section/div/a').text
-    panel_title = panel.find_element(By.XPATH, './/div/section[1]/div[2]/dir-row-display[1]/section/div/span').text
-    panel_campus = panel.find_element(By.XPATH, './/div/section[1]/div[2]/dir-row-display[3]/section/div/span').text
+def get_panel_data(panel):
+    panel_name = panel.find_element(By.CLASS_NAME, NAME_CLASS).text
+    panel_email = panel.find_element(By.XPATH, EMAIL_PATH).text
+    panel_title = panel.find_element(By.XPATH, TITLE_PATH).text
+    panel_campus = panel.find_element(By.XPATH, CAMPUS_PATH).text
     
     return {'Name': panel_name, 'Email': panel_email, 'Title': panel_title, 'Campus': panel_campus}
 
