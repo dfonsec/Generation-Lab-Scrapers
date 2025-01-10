@@ -17,6 +17,7 @@ def scrape_page_data(target_url):
             continue
         elif i == LAST_ROW:
             break
+        
         try:
             row_data = get_row_data(row)
             data.append({"Name": row_data[0].text, 
