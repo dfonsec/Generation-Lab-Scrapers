@@ -40,7 +40,7 @@ queries = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al
            'zw', 'zx', 'zy', 'zz', "John", "Mary", "James", "Sarah", "Robert", "Emily" ]
 
 
-queries = ["zal"]
+queries_2 = ["aaaaaaa", "aa"]
 
 def run_script(queries):
     session = requests.Session()
@@ -49,14 +49,27 @@ def run_script(queries):
         print("Beginning to scrape:", query)
         init_url = f'https://campdir.apps.mst.edu/cgi-bin/cgiwrap/campdir/directory.pl'
         response = get_data(init_url, "P", session, query)
-        anchors = get_profile_links(response)
-        page_data = get_user_data(anchors, session)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        if not is_valid(soup):
+            continue
         
+        anchors = get_profile_links(soup)
+        page_data = get_user_data(anchors, session)
         data.extend(page_data)
     
     return data
         
-
+def is_valid(soup):
+    div = soup.find("div", {"id": "content"})
+    center_text = div.find("center").get_text()
+    
+    if center_text[0] != "T":
+        print("Failure, There is nothing to scrape here!")
+        return False
+    else:
+        print("Success, There are things to scrape here!")
+        return True
+        
 
 def get_data(url, req_type, session, query=None):
     
@@ -75,9 +88,8 @@ def get_data(url, req_type, session, query=None):
 def configure_data(query):
     return {"name": query, "submit": "Search"}
 
-def get_profile_links(response):
+def get_profile_links(soup):
     
-    soup = BeautifulSoup(response.text, 'html.parser')
     pattern = re.compile(r'^directory\.pl\?mode=detail(&amp;|&)id=\w+\s*$')
     anchors = soup.find_all('a', href=pattern)
     return anchors
@@ -132,7 +144,7 @@ def is_student(soup):
 
 
 def main():
-    final = run_script(queries)
+    final = run_script(queries_2)
     print(final)
     print(len(final))
     return 
