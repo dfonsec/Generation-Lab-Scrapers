@@ -43,6 +43,9 @@ queries = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al
 queries_2 = ["aaaaaaa", "aa"]
 
 def run_script(queries):
+    
+
+    
     session = requests.Session()
     data = []
     for query in queries:
