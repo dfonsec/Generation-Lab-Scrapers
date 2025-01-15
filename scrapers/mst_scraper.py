@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from multiprocessing import Pool
 import re
+import math
 
 
 queries = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al', 'am', 'an', 'ao', 'ap', 'aq', 'ar', 'as', 'at', 'au', 
@@ -37,15 +38,21 @@ queries = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al
            'xl', 'xm', 'xn', 'xo', 'xp', 'xq', 'xr', 'xs', 'xt', 'xu', 'xv', 'xw', 'xx', 'xy', 'xz', 'ya', 'yb', 'yc', 'yd', 'ye', 'yf',
            'yg', 'yh', 'yi', 'yj', 'yk', 'yl', 'ym', 'yn', 'yo', 'yp', 'yq', 'yr', 'ys', 'yt', 'yu', 'yv', 'yw', 'yx', 'yy', 'yz', 'za',
            'zb', 'zc', 'zd', 'ze', 'zf', 'zg', 'zh', 'zi', 'zj', 'zk', 'zl', 'zm', 'zn', 'zo', 'zp', 'zq', 'zr', 'zs', 'zt', 'zu', 'zv',
-           'zw', 'zx', 'zy', 'zz', "John", "Mary", "James", "Sarah", "Robert", "Emily" ]
+           'zw', 'zx', 'zy', 'zz', "John", "Mary", "James", "Sarah", "Robert", "Emily"]
 
+def run_script(queries, num_workers=6):
+    # Split the queries into chunks for each worker
+    chunk_size = math.ceil(len(queries) / num_workers)
+    query_chunks = [queries[i:i + chunk_size] for i in range(0, len(queries), chunk_size)]
 
-queries_2 = ["aaaaaaa", "aa"]
+    with Pool(processes=num_workers) as pool:
+        # Map the chunks to worker threads
+        results = pool.map(scrape_all_queries, query_chunks)
 
-def run_script(queries):
-    
+    # Flatten the results into a single list
+    return [item for sublist in results for item in sublist]
 
-    
+def scrape_all_queries(queries):
     session = requests.Session()
     data = []
     for query in queries:
@@ -53,6 +60,7 @@ def run_script(queries):
         init_url = f'https://campdir.apps.mst.edu/cgi-bin/cgiwrap/campdir/directory.pl'
         response = get_data(init_url, "P", session, query)
         soup = BeautifulSoup(response.text, 'html.parser')
+        
         if not is_valid(soup):
             continue
         
@@ -90,6 +98,7 @@ def get_data(url, req_type, session, query=None):
 
 def configure_data(query):
     return {"name": query, "submit": "Search"}
+
 
 def get_profile_links(soup):
     
@@ -136,7 +145,6 @@ def is_student(soup):
     div = soup.find("table")
     category_elem = div.find("u")
     elem_text = category_elem.get_text()
-    print(elem_text)
     
     if elem_text[0] !=  "S":
         return False
@@ -147,10 +155,13 @@ def is_student(soup):
 
 
 def main():
-    final = run_script(queries_2)
-    print(final)
-    print(len(final))
-    return 
+    final = run_script(queries, num_workers=6)
+    
+    # Convert the data to a DataFrame and save it to an Excel file
+    final_data = pd.DataFrame(final, columns=["Name", "Email"])
+    final_data.to_excel("MST_DATA.xlsx", index=False)
+    print("Data scraping and saving completed!")
+    return
 
 if __name__ == "__main__":
     main()
