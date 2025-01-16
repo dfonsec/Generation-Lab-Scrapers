@@ -1,6 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 
+# Run script with a bunch of queries
+
+# Retrieve information
+
+# Parse response 
+
 
 def main():
     session = requests.Session()
