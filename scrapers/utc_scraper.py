@@ -14,8 +14,28 @@ import pandas as pd
     # build a mass link of user links
     # retrieve the user info via get requests
     
+
+def run_script(queries):
+    session = requests.Session()
+    result_data = []
+    for query in queries:
+        print("Processing query:", query)
+        init_url = f'https://people.utc.edu/eGuide/servlet/eGuide?User.context=qtlsRhrljmKm&Action=List.get&Object.uid=USER&max=10000&Search.attributes=,LASTNAME,EDUPERSONNICKNAME,EDUPERSONPRIMARYAFFILIATION&Primary.sortkey=LASTNAME&Secondary.sortkey=EDUPERSONNICKNAME'
+        data = {"attr1": "LASTNAME",
+                "crit1": "sw",
+                "val1": query,
+                "x": "68",
+                "y": "14"}
+        master_soup = make_request(init_url, "P", session, data)
+        user_urls = extract_urls(master_soup)
+        query_result = [parse_user_profile(make_request(url, "G", session)) for url in user_urls]
+        result_data.extend(query_result)
+        print("Finished processing query:", query)
     
-    
+    return result_data
+        
+        
+        
 def make_request(url, req_type, session, data=None):
 
     if req_type == "G":
@@ -55,9 +75,6 @@ def parse_anchor(row_soup):
     return anchor_link
 
 def parse_user_profile(soup):
-    response = session.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
     user_data = soup.find_all("td", {"class": "ValueText"})
     
     user_name = soup.find("td", {"class": "formhead2"}).get_text(strip=True).strip()
@@ -69,26 +86,10 @@ def parse_user_profile(soup):
     return {"Name": user_name, "Preferred Name": u_preferred_name, "Email": u_email, "Affiliation": u_affiliation}
 
 def main():
-    session = requests.Session()
-    url = 'https://people.utc.edu/eGuide/servlet/eGuide?User.context=qtlsRhrljmKm&Action=Detail.get&User.dn=cn%3djgs684%2cou%3dUsers%2co%3dutc&Directory.uid=people&Object.uid=USER'
-    data = {"attr1": "LASTNAME", "crit1": "sw", "val1": "a", "x": "43", "y": "23"}
-    print(parse_user_profile(url, session))
-    
-    data_example = [parse_user_profile(url, session)]
-    data_df = pd.DataFrame(data_example)
-    data_df.to_excel("data.xlsx")
-    # soup = BeautifulSoup(response.text, 'html.parser')
-    # rows = extract_urls(soup)
-    # print(rows[:5])
-    # soup = BeautifulSoup(response_user.text, 'html.parser')
-    # name = soup.find("td", {"class": "formhead2"})
-    # values = soup.find_all("td", {"class": "ValueText"})
-    # data = []
-    # data.append(' '.join(name.get_text().split()))
-    # data.extend([value.get_text().strip() for value in values])
-    
-    # print(data)
-    
+    queries = ["a", "b"]
+    result = run_script(queries)
+    result_df = pd.DataFrame(result)
+    result_df.to_excel("data.xlsx")
     
     return
 
